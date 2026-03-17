@@ -126,6 +126,10 @@ async function loadNewsBySelectedDate() {
   updateTime.textContent = new Date().toLocaleString("zh-TW");
   selectedDateLabel.textContent = selectedDateKey;
 
+  loadBtn.disabled = true;
+  todayBtn.disabled = true;
+  yesterdayBtn.disabled = true;
+
   try {
     const results = await Promise.allSettled(sources.map(fetchSourceNews));
 
@@ -146,6 +150,10 @@ async function loadNewsBySelectedDate() {
   } catch (error) {
     newsList.innerHTML = `<div class="error-state">新聞載入失敗，請稍後重新整理。</div>`;
     statusText.textContent = "載入失敗";
+  } finally {
+    loadBtn.disabled = false;
+    todayBtn.disabled = false;
+    yesterdayBtn.disabled = false;
   }
 }
 
