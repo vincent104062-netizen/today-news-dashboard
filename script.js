@@ -1,33 +1,34 @@
 const newsList = document.getElementById("newsList");
 const updateTime = document.getElementById("updateTime");
-const todayLabel = document.getElementById("todayLabel");
+const selectedDateLabel = document.getElementById("selectedDateLabel");
 const statusText = document.getElementById("statusText");
-const refreshBtn = document.getElementById("refreshBtn");
+const datePicker = document.getElementById("datePicker");
+const loadBtn = document.getElementById("loadBtn");
+const todayBtn = document.getElementById("todayBtn");
+const yesterdayBtn = document.getElementById("yesterdayBtn");
 
 const sources = [
-  {
-    name: "中時新聞網",
-    domainQuery: "site:chinatimes.com"
-  },
-  {
-    name: "聯合新聞網",
-    domainQuery: "site:udn.com"
-  },
-  {
-    name: "自由時報",
-    domainQuery: "site:ltn.com.tw"
-  },
-  {
-    name: "ETtoday",
-    domainQuery: "site:ettoday.net"
-  }
+  { name: "中時新聞網", domainQuery: "site:chinatimes.com" },
+  { name: "聯合新聞網", domainQuery: "site:udn.com" },
+  { name: "自由時報", domainQuery: "site:ltn.com.tw" },
+  { name: "ETtoday", domainQuery: "site:ettoday.net" }
 ];
 
-function getTodayKey(date = new Date()) {
+function formatKey(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function getTodayDate() {
+  return new Date();
+}
+
+function getYesterdayDate() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
 }
 
 function formatDateTime(dateStr) {
@@ -71,27 +72,26 @@ function stripHtml(html) {
   return temp.textContent || temp.innerText || "";
 }
 
-function filterTodayNews(items) {
-  const today = getTodayKey();
+function filterByDate(items, selectedDateKey) {
   return items.filter(item => {
     const d = new Date(item.pubDate);
     if (Number.isNaN(d.getTime())) return false;
-    return getTodayKey(d) === today;
+    return formatKey(d) === selectedDateKey;
   });
 }
 
-function summarize(items) {
+function summarize(items, dateKey) {
   if (!items.length) {
-    return "今天目前沒有抓到可顯示的新聞。";
+    return `${dateKey} 沒有抓到可顯示的新聞。`;
   }
-  return `共整理 ${items.length} 則今日新聞。`;
+  return `${dateKey} 共整理 ${items.length} 則新聞。`;
 }
 
 function renderNews(items) {
   newsList.innerHTML = "";
 
   if (!items.length) {
-    newsList.innerHTML = `<div class="empty-state">今天目前沒有抓到新聞，可能是來源尚未更新，請稍後再試。</div>`;
+    newsList.innerHTML = `<div class="empty-state">這一天目前沒有抓到新聞，請改選其他日期再試。</div>`;
     return;
   }
 
@@ -114,11 +114,17 @@ function renderNews(items) {
   });
 }
 
-async function loadNews() {
+async function loadNewsBySelectedDate() {
+  const selectedDateKey = datePicker.value;
+  if (!selectedDateKey) {
+    statusText.textContent = "請先選擇日期。";
+    return;
+  }
+
   newsList.innerHTML = `<p class="loading">新聞載入中，請稍候...</p>`;
-  statusText.textContent = "正在抓取今日新聞...";
+  statusText.textContent = "正在抓取新聞...";
   updateTime.textContent = new Date().toLocaleString("zh-TW");
-  todayLabel.textContent = getTodayKey();
+  selectedDateLabel.textContent = selectedDateKey;
 
   try {
     const results = await Promise.allSettled(sources.map(fetchSourceNews));
@@ -131,18 +137,29 @@ async function loadNews() {
       }
     });
 
-    merged = filterTodayNews(merged)
+    merged = filterByDate(merged, selectedDateKey)
       .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
       .slice(0, 20);
 
     renderNews(merged);
-    statusText.textContent = summarize(merged);
+    statusText.textContent = summarize(merged, selectedDateKey);
   } catch (error) {
     newsList.innerHTML = `<div class="error-state">新聞載入失敗，請稍後重新整理。</div>`;
     statusText.textContent = "載入失敗";
   }
 }
 
-refreshBtn.addEventListener("click", loadNews);
+loadBtn.addEventListener("click", loadNewsBySelectedDate);
 
-loadNews();
+todayBtn.addEventListener("click", () => {
+  datePicker.value = formatKey(getTodayDate());
+  loadNewsBySelectedDate();
+});
+
+yesterdayBtn.addEventListener("click", () => {
+  datePicker.value = formatKey(getYesterdayDate());
+  loadNewsBySelectedDate();
+});
+
+datePicker.value = formatKey(getTodayDate());
+loadNewsBySelectedDate();
