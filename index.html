@@ -3,45 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>今日新聞聚合 Final</title>
+  <title>新聞聚合儀表板 Final</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="top-bar">
-      <div>
-        <h1>今日新聞聚合 Final</h1>
-        <p class="subtitle">自動整理新聞，並可切換日期查看結果</p>
-      </div>
-      <span class="version-badge">Final</span>
-    </div>
+  <div class="page-shell">
+    <div class="container">
+      <header class="hero">
+        <div class="hero-left">
+          <p class="hero-tag">GitHub × Vercel × Auto Deploy</p>
+          <h1>新聞聚合儀表板</h1>
+          <p class="subtitle">
+            自動整理新聞內容，並支援依日期查詢。此頁面可用來展示 GitHub 版本控制、
+            Vercel 自動部署與版本回滾流程。
+          </p>
+        </div>
+        <div class="hero-right">
+          <span class="version-badge">Final Version</span>
+        </div>
+      </header>
 
-    <div class="info-box">
-      <p><strong>最後更新時間：</strong><span id="updateTime">載入中...</span></p>
-      <p><strong>目前查詢日期：</strong><span id="selectedDateLabel">載入中...</span></p>
-      <p><strong>部署平台：</strong>GitHub + Vercel</p>
-    </div>
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">最後更新時間</span>
+          <strong id="updateTime">載入中...</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">目前查詢日期</span>
+          <strong id="selectedDateLabel">載入中...</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">部署平台</span>
+          <strong>GitHub + Vercel</strong>
+        </div>
+      </section>
 
-    <div class="toolbar">
-      <label for="datePicker"><strong>選擇日期：</strong></label>
-      <input type="date" id="datePicker" />
-      <button id="loadBtn">查詢新聞</button>
-      <button id="todayBtn" type="button">今天</button>
-      <button id="yesterdayBtn" type="button">昨天</button>
-      <span id="statusText">準備載入新聞...</span>
-    </div>
+      <section class="toolbar-card">
+        <div class="toolbar-title">
+          <h2>新聞查詢控制台</h2>
+          <p>可選擇日期查看不同時間的新聞整理結果。</p>
+        </div>
 
-    <h2>新聞總覽</h2>
-    <div id="newsList" class="news-list">
-      <p class="loading">新聞載入中，請稍候...</p>
-    </div>
+        <div class="toolbar">
+          <div class="field-group">
+            <label for="datePicker">選擇日期</label>
+            <input type="date" id="datePicker" />
+          </div>
 
-    <div class="source-box">
-      <h3>資料來源說明</h3>
-      <p>
-        本頁面會整理多家新聞來源資料，並依照所選日期篩選顯示。
-        若當天資料較少或來源暫時沒有更新，畫面可能只顯示部分新聞。
-      </p>
+          <div class="button-group">
+            <button id="loadBtn">查詢新聞</button>
+            <button id="todayBtn" type="button" class="ghost-btn">今天</button>
+            <button id="yesterdayBtn" type="button" class="ghost-btn">昨天</button>
+          </div>
+        </div>
+
+        <div class="status-box">
+          <span class="status-dot"></span>
+          <span id="statusText">準備載入新聞...</span>
+        </div>
+      </section>
+
+      <section class="news-section">
+        <div class="section-head">
+          <h2>新聞總覽</h2>
+          <p>依時間排序顯示所選日期的新聞結果</p>
+        </div>
+
+        <div id="newsList" class="news-list">
+          <p class="loading">新聞載入中，請稍候...</p>
+        </div>
+      </section>
+
+      <section class="source-box">
+        <h3>資料來源說明</h3>
+        <p>
+          本頁面會整理多家新聞來源資料，並依照所選日期篩選顯示。
+          若當天資料較少或來源暫時沒有更新，畫面可能只顯示部分新聞。
+        </p>
+      </section>
     </div>
   </div>
 
