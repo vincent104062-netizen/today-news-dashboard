@@ -11,23 +11,27 @@
     <div class="top-bar">
       <div>
         <h1>今日新聞聚合 Final</h1>
-        <p class="subtitle">自動整理今日各家新聞，展示 GitHub + Vercel 自動部署成果</p>
+        <p class="subtitle">自動整理新聞，並可切換日期查看結果</p>
       </div>
       <span class="version-badge">Final</span>
     </div>
 
     <div class="info-box">
       <p><strong>最後更新時間：</strong><span id="updateTime">載入中...</span></p>
-      <p><strong>新聞日期：</strong><span id="todayLabel">載入中...</span></p>
+      <p><strong>目前查詢日期：</strong><span id="selectedDateLabel">載入中...</span></p>
       <p><strong>部署平台：</strong>GitHub + Vercel</p>
     </div>
 
     <div class="toolbar">
-      <button id="refreshBtn">重新整理新聞</button>
-      <span id="statusText">準備載入今日新聞...</span>
+      <label for="datePicker"><strong>選擇日期：</strong></label>
+      <input type="date" id="datePicker" />
+      <button id="loadBtn">查詢新聞</button>
+      <button id="todayBtn" type="button">今天</button>
+      <button id="yesterdayBtn" type="button">昨天</button>
+      <span id="statusText">準備載入新聞...</span>
     </div>
 
-    <h2>今日新聞總覽</h2>
+    <h2>新聞總覽</h2>
     <div id="newsList" class="news-list">
       <p class="loading">新聞載入中，請稍候...</p>
     </div>
@@ -35,8 +39,8 @@
     <div class="source-box">
       <h3>資料來源說明</h3>
       <p>
-        本頁面會即時整理多家新聞來源的今日新聞，並只顯示當日資料。
-        若部分來源暫時沒有今日文章或外部服務回應較慢，畫面會自動略過該來源。
+        本頁面會整理多家新聞來源資料，並依照所選日期篩選顯示。
+        若當天資料較少或來源暫時沒有更新，畫面可能只顯示部分新聞。
       </p>
     </div>
   </div>
