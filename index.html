@@ -3,18 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>今日新聞聚合 Demo</title>
+  <title>今日新聞聚合 Demo v2</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>今日新聞聚合 Demo</h1>
-    <p>這是一個展示 GitHub + Vercel 自動部署流程的小專案。</p>
+    <div class="top-bar">
+      <h1>今日新聞聚合 Demo v2</h1>
+      <span class="version-badge">Version 2</span>
+    </div>
 
-    <h2>示範新聞列表</h2>
-    <ul id="newsList">
-      <li>載入中...</li>
-    </ul>
+    <p class="intro">
+      這是第二版展示網站，加入版本標示、更新時間、卡片式新聞列表與資料來源說明。
+    </p>
+
+    <div class="info-box">
+      <p><strong>最後更新時間：</strong><span id="updateTime"></span></p>
+      <p><strong>部署平台：</strong>GitHub + Vercel</p>
+    </div>
+
+    <h2>今日新聞重點</h2>
+    <div id="newsList" class="news-list">
+      <p>載入中...</p>
+    </div>
+
+    <div class="source-box">
+      <h3>資料來源說明</h3>
+      <p>目前版本為展示用途，使用範例新聞資料模擬新聞聚合效果，後續可再串接 RSS 或 API。</p>
+    </div>
   </div>
 
   <script src="script.js"></script>
