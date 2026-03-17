@@ -60,18 +60,34 @@ h1 {
   flex-wrap: wrap;
 }
 
-#refreshBtn {
+#datePicker,
+#loadBtn,
+#todayBtn,
+#yesterdayBtn {
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+#datePicker {
+  padding: 9px 12px;
+  border: 1px solid #cfd8e3;
+  background: white;
+}
+
+#loadBtn,
+#todayBtn,
+#yesterdayBtn {
   background: #1d4ed8;
   color: white;
   border: none;
-  border-radius: 10px;
   padding: 10px 16px;
   cursor: pointer;
-  font-size: 14px;
   font-weight: bold;
 }
 
-#refreshBtn:hover {
+#loadBtn:hover,
+#todayBtn:hover,
+#yesterdayBtn:hover {
   opacity: 0.92;
 }
 
