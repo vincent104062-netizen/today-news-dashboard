@@ -3,16 +3,13 @@ const updateTime = document.getElementById("updateTime");
 const selectedDateLabel = document.getElementById("selectedDateLabel");
 const statusText = document.getElementById("statusText");
 const datePicker = document.getElementById("datePicker");
+const keywordInput = document.getElementById("keywordInput");
+const severitySelect = document.getElementById("severitySelect");
 const loadBtn = document.getElementById("loadBtn");
 const todayBtn = document.getElementById("todayBtn");
 const yesterdayBtn = document.getElementById("yesterdayBtn");
 
-const sources = [
-  { name: "中時新聞網", domainQuery: "site:chinatimes.com" },
-  { name: "聯合新聞網", domainQuery: "site:udn.com" },
-  { name: "自由時報", domainQuery: "site:ltn.com.tw" },
-  { name: "ETtoday", domainQuery: "site:ettoday.net" }
-];
+const BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 
 function formatKey(date) {
   const y = date.getFullYear();
@@ -37,119 +34,164 @@ function formatDateTime(dateStr) {
   return date.toLocaleString("zh-TW");
 }
 
-function getGoogleNewsRssUrl(query) {
-  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
+function buildDateRange(dateKey) {
+  return {
+    start: `${dateKey}T00:00:00.000Z`,
+    end: `${dateKey}T23:59:59.999Z`
+  };
 }
 
-function getRss2JsonUrl(rssUrl) {
-  return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+function getPrimaryDescription(cve) {
+  const descriptions = cve.descriptions || [];
+  const zh = descriptions.find(d => d.lang === "zh");
+  const en = descriptions.find(d => d.lang === "en");
+  return (zh || en || descriptions[0] || {}).value || "No description.";
 }
 
-async function fetchSourceNews(source) {
-  const rssUrl = getGoogleNewsRssUrl(source.domainQuery);
-  const apiUrl = getRss2JsonUrl(rssUrl);
+function getCwe(cve) {
+  const weaknesses = cve.weaknesses || [];
+  for (const w of weaknesses) {
+    for (const desc of (w.description || [])) {
+      if (desc.value) return desc.value;
+    }
+  }
+  return "N/A";
+}
 
-  const res = await fetch(apiUrl);
-  if (!res.ok) {
-    throw new Error(`${source.name} 載入失敗`);
+function getCvssInfo(cve) {
+  const metrics = cve.metrics || {};
+
+  if (metrics.cvssMetricV31 && metrics.cvssMetricV31.length) {
+    const item = metrics.cvssMetricV31[0];
+    return {
+      version: "CVSS v3.1",
+      score: item.cvssData?.baseScore ?? "N/A",
+      severity: item.cvssData?.baseSeverity ?? "N/A"
+    };
   }
 
-  const data = await res.json();
-  const items = Array.isArray(data.items) ? data.items : [];
+  if (metrics.cvssMetricV30 && metrics.cvssMetricV30.length) {
+    const item = metrics.cvssMetricV30[0];
+    return {
+      version: "CVSS v3.0",
+      score: item.cvssData?.baseScore ?? "N/A",
+      severity: item.cvssData?.baseSeverity ?? "N/A"
+    };
+  }
 
-  return items.map(item => ({
-    source: source.name,
-    title: item.title || "未命名新聞",
-    link: item.link || "#",
-    pubDate: item.pubDate || "",
-    description: item.description || ""
-  }));
+  if (metrics.cvssMetricV2 && metrics.cvssMetricV2.length) {
+    const item = metrics.cvssMetricV2[0];
+    return {
+      version: "CVSS v2",
+      score: item.cvssData?.baseScore ?? "N/A",
+      severity: item.baseSeverity ?? "N/A"
+    };
+  }
+
+  return {
+    version: "N/A",
+    score: "N/A",
+    severity: "N/A"
+  };
 }
 
-function stripHtml(html) {
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
-  return temp.textContent || temp.innerText || "";
-}
+function buildApiUrl() {
+  const selectedDateKey = datePicker.value;
+  const keyword = keywordInput.value.trim();
+  const severity = severitySelect.value;
 
-function filterByDate(items, selectedDateKey) {
-  return items.filter(item => {
-    const d = new Date(item.pubDate);
-    if (Number.isNaN(d.getTime())) return false;
-    return formatKey(d) === selectedDateKey;
+  const { start, end } = buildDateRange(selectedDateKey);
+  const params = new URLSearchParams({
+    pubStartDate: start,
+    pubEndDate: end,
+    resultsPerPage: "20"
   });
-}
 
-function summarize(items, dateKey) {
-  if (!items.length) {
-    return `${dateKey} 沒有抓到可顯示的新聞。`;
+  params.append("noRejected", "");
+
+  if (keyword) {
+    params.set("keywordSearch", keyword);
   }
-  return `${dateKey} 共整理 ${items.length} 則新聞。`;
+
+  if (severity) {
+    params.set("cvssV3Severity", severity);
+  }
+
+  return `${BASE_URL}?${params.toString()}`;
 }
 
-function renderNews(items) {
+function summarize(total, dateKey) {
+  if (!total) return `${dateKey} 沒有符合條件的 CVE。`;
+  return `${dateKey} 共找到 ${total} 筆符合條件的 CVE。`;
+}
+
+function renderItems(vulnerabilities) {
   newsList.innerHTML = "";
 
-  if (!items.length) {
-    newsList.innerHTML = `<div class="empty-state">這一天目前沒有抓到新聞，請改選其他日期再試。</div>`;
+  if (!vulnerabilities.length) {
+    newsList.innerHTML = `<div class="empty-state">沒有符合條件的 CVE，請調整日期、關鍵字或嚴重度後再試。</div>`;
     return;
   }
 
-  items.forEach(item => {
+  vulnerabilities.forEach(item => {
+    const cve = item.cve;
+    const id = cve.id;
+    const published = cve.published;
+    const description = getPrimaryDescription(cve).slice(0, 260);
+    const cwe = getCwe(cve);
+    const cvss = getCvssInfo(cve);
+    const detailUrl = `https://nvd.nist.gov/vuln/detail/${id}`;
+
     const card = document.createElement("div");
     card.className = "news-card";
-
-    const desc = stripHtml(item.description).trim().slice(0, 120) || "點擊查看完整新聞內容。";
-
     card.innerHTML = `
       <div class="news-header">
-        <span class="news-source">${item.source}</span>
-        <span class="news-time">${formatDateTime(item.pubDate)}</span>
+        <span class="news-source">${id}</span>
+        <span class="news-time">${formatDateTime(published)}</span>
       </div>
-      <a class="news-title" href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-      <p class="news-desc">${desc}</p>
+      <a class="news-title" href="${detailUrl}" target="_blank" rel="noopener noreferrer">${id}</a>
+      <div class="meta-row">
+        <span class="meta-pill">${cvss.version}</span>
+        <span class="meta-pill">Score: ${cvss.score}</span>
+        <span class="meta-pill">Severity: ${cvss.severity}</span>
+        <span class="meta-pill">CWE: ${cwe}</span>
+      </div>
+      <p class="news-desc">${description}</p>
     `;
-
     newsList.appendChild(card);
   });
 }
 
-async function loadNewsBySelectedDate() {
+async function loadCves() {
   const selectedDateKey = datePicker.value;
   if (!selectedDateKey) {
     statusText.textContent = "請先選擇日期。";
     return;
   }
 
-  newsList.innerHTML = `<p class="loading">新聞載入中，請稍候...</p>`;
-  statusText.textContent = "正在抓取新聞...";
   updateTime.textContent = new Date().toLocaleString("zh-TW");
   selectedDateLabel.textContent = selectedDateKey;
+  statusText.textContent = "正在查詢 NVD CVE API...";
+  newsList.innerHTML = `<p class="loading">資料載入中，請稍候...</p>`;
 
   loadBtn.disabled = true;
   todayBtn.disabled = true;
   yesterdayBtn.disabled = true;
 
   try {
-    const results = await Promise.allSettled(sources.map(fetchSourceNews));
+    const apiUrl = buildApiUrl();
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-    let merged = [];
-
-    results.forEach(result => {
-      if (result.status === "fulfilled") {
-        merged = merged.concat(result.value);
-      }
-    });
-
-    merged = filterByDate(merged, selectedDateKey)
-      .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-      .slice(0, 20);
-
-    renderNews(merged);
-    statusText.textContent = summarize(merged, selectedDateKey);
+    const data = await response.json();
+    const vulnerabilities = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+    renderItems(vulnerabilities);
+    statusText.textContent = summarize(data.totalResults || vulnerabilities.length, selectedDateKey);
   } catch (error) {
-    newsList.innerHTML = `<div class="error-state">新聞載入失敗，請稍後重新整理。</div>`;
-    statusText.textContent = "載入失敗";
+    newsList.innerHTML = `<div class="error-state">NVD 資料載入失敗，請稍後再試或調整查詢條件。</div>`;
+    statusText.textContent = "查詢失敗";
   } finally {
     loadBtn.disabled = false;
     todayBtn.disabled = false;
@@ -157,17 +199,17 @@ async function loadNewsBySelectedDate() {
   }
 }
 
-loadBtn.addEventListener("click", loadNewsBySelectedDate);
+loadBtn.addEventListener("click", loadCves);
 
 todayBtn.addEventListener("click", () => {
   datePicker.value = formatKey(getTodayDate());
-  loadNewsBySelectedDate();
+  loadCves();
 });
 
 yesterdayBtn.addEventListener("click", () => {
   datePicker.value = formatKey(getYesterdayDate());
-  loadNewsBySelectedDate();
+  loadCves();
 });
 
 datePicker.value = formatKey(getTodayDate());
-loadNewsBySelectedDate();
+loadCves();
