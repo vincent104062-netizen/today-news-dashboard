@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>新聞聚合儀表板 Final</title>
+  <title>CVE Dashboard | NVD API</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,15 +11,14 @@
     <div class="container">
       <header class="hero">
         <div class="hero-left">
-          <p class="hero-tag">GitHub × Vercel × Auto Deploy</p>
-          <h1>新聞聚合儀表板</h1>
+          <p class="hero-tag">NVD API × GitHub × Vercel</p>
+          <h1>CVE Dashboard</h1>
           <p class="subtitle">
-            自動整理新聞內容，並支援依日期查詢。此頁面可用來展示 GitHub 版本控制、
-            Vercel 自動部署與版本回滾流程。
+            使用 NVD 官方 CVE API 查詢指定日期的漏洞資料，並支援關鍵字與嚴重度篩選。
           </p>
         </div>
         <div class="hero-right">
-          <span class="version-badge">Final Version</span>
+          <span class="version-badge">Final</span>
         </div>
       </header>
 
@@ -29,29 +28,45 @@
           <strong id="updateTime">載入中...</strong>
         </div>
         <div class="summary-card">
-          <span class="summary-label">目前查詢日期</span>
+          <span class="summary-label">查詢日期</span>
           <strong id="selectedDateLabel">載入中...</strong>
         </div>
         <div class="summary-card">
-          <span class="summary-label">部署平台</span>
-          <strong>GitHub + Vercel</strong>
+          <span class="summary-label">資料來源</span>
+          <strong>NVD CVE API 2.0</strong>
         </div>
       </section>
 
       <section class="toolbar-card">
         <div class="toolbar-title">
-          <h2>新聞查詢控制台</h2>
-          <p>可選擇日期查看不同時間的新聞整理結果。</p>
+          <h2>漏洞查詢控制台</h2>
+          <p>依日期、關鍵字、嚴重度查詢 CVE。</p>
         </div>
 
         <div class="toolbar">
           <div class="field-group">
-            <label for="datePicker">選擇日期</label>
+            <label for="datePicker">日期</label>
             <input type="date" id="datePicker" />
           </div>
 
+          <div class="field-group">
+            <label for="keywordInput">關鍵字</label>
+            <input type="text" id="keywordInput" placeholder="例如: windows, outlook, apache" />
+          </div>
+
+          <div class="field-group">
+            <label for="severitySelect">嚴重度</label>
+            <select id="severitySelect">
+              <option value="">全部</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+
           <div class="button-group">
-            <button id="loadBtn">查詢新聞</button>
+            <button id="loadBtn">查詢 CVE</button>
             <button id="todayBtn" type="button" class="ghost-btn">今天</button>
             <button id="yesterdayBtn" type="button" class="ghost-btn">昨天</button>
           </div>
@@ -59,26 +74,26 @@
 
         <div class="status-box">
           <span class="status-dot"></span>
-          <span id="statusText">準備載入新聞...</span>
+          <span id="statusText">準備查詢 CVE...</span>
         </div>
       </section>
 
       <section class="news-section">
         <div class="section-head">
-          <h2>新聞總覽</h2>
-          <p>依時間排序顯示所選日期的新聞結果</p>
+          <h2>CVE 結果</h2>
+          <p>依發布時間排序，最多顯示 20 筆。</p>
         </div>
 
         <div id="newsList" class="news-list">
-          <p class="loading">新聞載入中，請稍候...</p>
+          <p class="loading">資料載入中，請稍候...</p>
         </div>
       </section>
 
       <section class="source-box">
-        <h3>資料來源說明</h3>
+        <h3>資料說明</h3>
         <p>
-          本頁面會整理多家新聞來源資料，並依照所選日期篩選顯示。
-          若當天資料較少或來源暫時沒有更新，畫面可能只顯示部分新聞。
+          本系統使用 NVD 官方 CVE API 2.0，依查詢日期組合發布時間區間後進行查詢，
+          並排除 rejected 項目，較適合做穩定的資安儀表板展示。
         </p>
       </section>
     </div>
