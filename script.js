@@ -95,6 +95,15 @@ function getCvssInfo(cve) {
   };
 }
 
+function getSeverityClass(severity) {
+  const value = String(severity || "").toUpperCase();
+  if (value === "CRITICAL") return "severity-critical";
+  if (value === "HIGH") return "severity-high";
+  if (value === "MEDIUM") return "severity-medium";
+  if (value === "LOW") return "severity-low";
+  return "severity-na";
+}
+
 function buildApiUrl() {
   const selectedDateKey = datePicker.value;
   const keyword = keywordInput.value.trim();
@@ -137,23 +146,28 @@ function renderItems(vulnerabilities) {
     const cve = item.cve;
     const id = cve.id;
     const published = cve.published;
+    const lastModified = cve.lastModified;
     const description = getPrimaryDescription(cve).slice(0, 260);
     const cwe = getCwe(cve);
     const cvss = getCvssInfo(cve);
     const detailUrl = `https://nvd.nist.gov/vuln/detail/${id}`;
+    const severityClass = getSeverityClass(cvss.severity);
 
     const card = document.createElement("div");
     card.className = "news-card";
     card.innerHTML = `
       <div class="news-header">
         <span class="news-source">${id}</span>
-        <span class="news-time">${formatDateTime(published)}</span>
+        <div class="news-time-box">
+          <div>Published: ${formatDateTime(published)}</div>
+          <div>Modified: ${formatDateTime(lastModified)}</div>
+        </div>
       </div>
       <a class="news-title" href="${detailUrl}" target="_blank" rel="noopener noreferrer">${id}</a>
       <div class="meta-row">
         <span class="meta-pill">${cvss.version}</span>
         <span class="meta-pill">Score: ${cvss.score}</span>
-        <span class="meta-pill">Severity: ${cvss.severity}</span>
+        <span class="meta-pill severity-pill ${severityClass}">Severity: ${cvss.severity}</span>
         <span class="meta-pill">CWE: ${cwe}</span>
       </div>
       <p class="news-desc">${description}</p>
